@@ -462,6 +462,26 @@ def register_main_menu_handlers(bot_instance):
             else:
                 keyboard.add(types.InlineKeyboardButton("⬅️ Назад к участнику", callback_data=f"participant_{participant_id}"))
             text = f"Выберите новую дату фестиваля:"
+        elif field == 'time_fest':
+            # Получаем информацию об участнике для проверки date_fest
+            participant = db.get_participant_by_id(participant_id)
+            
+            if participant['date_fest'] == '24-25 октября':
+                # Для двухдневного посещения показываем кнопки для первого дня
+                keyboard = types.InlineKeyboardMarkup()
+                keyboard.add(types.InlineKeyboardButton("12:00", callback_data="update_time1_12:00"))
+                keyboard.add(types.InlineKeyboardButton("13:00", callback_data="update_time1_13:00"))
+                keyboard.add(types.InlineKeyboardButton("14:00", callback_data="update_time1_14:00"))
+                keyboard.add(types.InlineKeyboardButton("15:00", callback_data="update_time1_15:00"))
+                keyboard.add(types.InlineKeyboardButton("16:00", callback_data="update_time1_16:00"))
+                keyboard.add(types.InlineKeyboardButton("17:00", callback_data="update_time1_17:00"))
+                keyboard.add(types.InlineKeyboardButton("18:00", callback_data="update_time1_18:00"))
+                # Кнопка назад остается как есть
+                text = f"Выберите время посещения для 24 октября:"
+            else:
+                # Для однодневного посещения - текстовый ввод как сейчас
+                text = f"Введите новое значение для поля '{field_names[field]}':"
+                bot.register_next_step_handler(call.message, edit_field_handler, admin_id, field)
         else:
             text = f"Введите новое значение для поля '{field_names[field]}':"
             bot.register_next_step_handler(call.message, edit_field_handler, admin_id, field)
@@ -625,7 +645,7 @@ def register_main_menu_handlers(bot_instance):
             text1 = "❌ Ошибка при отправке вопроса. Попробуйте позже."
         clear_chat_history_optimized(message, 2)
         safe_send_message(
-            chat_id=ХХХХХХХХХХ,
+            chat_id=1385548872,
             text = 'Добавлен вопрос в разделе "Ответить на вопрос"', 
             reply_markup=keyboard)
         safe_send_message(
@@ -853,7 +873,52 @@ def register_main_menu_handlers(bot_instance):
         preview_text += "Подтвердите отправку:"
         clear_chat_history_optimized(message, 3)
         safe_send_message(message.chat.id, preview_text, reply_markup=keyboard)
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("update_time1_"))
+    def callback_update_time1(call):
+        """Первое время для 24-25 октября (24 октября)"""
+        time1 = call.data.split("update_time1_")[1]
+        admin_id = call.from_user.id
+        
+        # Сохраняем первое время во временные данные
+        admin_temp_data[admin_id]['time1'] = time1
+        
+        # Показываем кнопки для второго дня
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("12:00", callback_data="update_time2_12:00"))
+        keyboard.add(types.InlineKeyboardButton("13:00", callback_data="update_time2_13:00"))
+        keyboard.add(types.InlineKeyboardButton("14:00", callback_data="update_time2_14:00"))
+        keyboard.add(types.InlineKeyboardButton("15:00", callback_data="update_time2_15:00"))
+        keyboard.add(types.InlineKeyboardButton("16:00", callback_data="update_time2_16:00"))
+        keyboard.add(types.InlineKeyboardButton("17:00", callback_data="update_time2_17:00"))
+        keyboard.add(types.InlineKeyboardButton("18:00", callback_data="update_time2_18:00"))
+        participant_id = admin_temp_data[admin_id]['editing_participant_id']
+        if admin_id in admin_temp_data and admin_temp_data[admin_id].get('from_search'):
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад к участнику", callback_data=f"search_participant_{participant_id}"))
+        else:
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад к участнику", callback_data=f"participant_{participant_id}"))
+        
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=f"Выбрано время для 24 октября: {time1}\n\nТеперь выберите время для 25 октября:",
+            reply_markup=keyboard
+        )
 
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("update_time2_"))
+    def callback_update_time2(call):
+        """Второе время для 24-25 октября (25 октября)"""
+        time2 = call.data.split("update_time2_")[1]
+        admin_id = call.from_user.id
+        
+        if admin_id not in admin_temp_data or 'time1' not in admin_temp_data[admin_id]:
+            bot.answer_callback_query(call.id, "❌ Ошибка: первое время не найдено")
+            return
+        
+        time1 = admin_temp_data[admin_id]['time1']
+        new_value = f"{time1};{time2}"
+        
+        # Обновляем поле в БД
+        update_field_value(call, 'time_fest', new_value)
     @bot.callback_query_handler(func=lambda call: call.data == "confirm_mailing")
     def callback_confirm_mailing(call):
         admin_id = call.from_user.id
@@ -1053,21 +1118,25 @@ def edit_field_handler(message, admin_id, field):
                     break
     
     elif field == 'time_fest':
-        if len(new_value) != 5 or new_value.count(':') != 1:
-            clear_chat_history_optimized(message, 2)
-            validation_error = 'Неправильный формат времени!\nВведите время в формате "ЧЧ:ММ"'
-        else:
-            try:
-                from datetime import datetime
-                time_obj = datetime.strptime(new_value, "%H:%M").time()
-                start_time = datetime.strptime("12:00", "%H:%M").time()
-                end_time = datetime.strptime("19:00", "%H:%M").time()
-                if not (start_time <= time_obj <= end_time):
-                    clear_chat_history_optimized(message, 2)
-                    validation_error = 'Время должно быть в диапазоне от 12:00 до 19:00!'
-            except ValueError:
+            participant_id = admin_temp_data[admin_id]['editing_participant_id']
+            participant = db.get_participant_by_id(participant_id)
+            if participant['date_fest'] == '24-25 октября':
+                return
+            if len(new_value) != 5 or new_value.count(':') != 1:
                 clear_chat_history_optimized(message, 2)
                 validation_error = 'Неправильный формат времени!\nВведите время в формате "ЧЧ:ММ"'
+            else:
+                try:
+                    from datetime import datetime
+                    time_obj = datetime.strptime(new_value, "%H:%M").time()
+                    start_time = datetime.strptime("12:00", "%H:%M").time()
+                    end_time = datetime.strptime("19:00", "%H:%M").time()
+                    if not (start_time <= time_obj <= end_time):
+                        clear_chat_history_optimized(message, 2)
+                        validation_error = 'Время должно быть в диапазоне от 12:00 до 19:00!'
+                except ValueError:
+                    clear_chat_history_optimized(message, 2)
+                    validation_error = 'Неправильный формат времени!\nВведите время в формате "ЧЧ:ММ"'
     
     elif field == 'date_of_birth':
         try:

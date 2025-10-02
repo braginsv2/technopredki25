@@ -385,7 +385,36 @@ class DatabaseManager:
         finally:
             if connection:
                 self.put_connection(connection)
-
+    def fix_two_day_times(self):
+        """Исправление времени для двухдневных участников (одноразовая миграция)"""
+        query = """
+        SELECT id, time_fest 
+        FROM participants 
+        WHERE date_fest = '24-25 октября' AND time_fest NOT LIKE '%;%';
+        """
+        connection = None
+        try:
+            connection = self.get_connection()
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                results = cursor.fetchall()
+                
+                for participant_id, time_fest in results:
+                    # Дублируем время для обоих дней
+                    new_time = f"{time_fest};{time_fest}"
+                    update_query = "UPDATE participants SET time_fest = %s WHERE id = %s;"
+                    cursor.execute(update_query, (new_time, participant_id))
+                
+                connection.commit()
+                logger.info(f"✅ Исправлено {len(results)} записей с некорректным форматом времени")
+                
+        except psycopg2.Error as e:
+            if connection:
+                connection.rollback()
+            logger.error(f"❌ Ошибка исправления данных: {e}")
+        finally:
+            if connection:
+                self.put_connection(connection)
     def get_age_statistics(self):
         """Получение статистики по возрасту"""
         query = """
