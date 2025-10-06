@@ -10,6 +10,7 @@ import time
 bot = telebot.TeleBot(TOKEN)
 db = None
 
+
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     """Обработчик команды /start"""
@@ -155,4 +156,5 @@ if __name__ == '__main__':
         import traceback
         traceback.print_exc()
     finally:
+
         print("👋 Завершение работы бота")
