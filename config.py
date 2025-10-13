@@ -1,4 +1,3 @@
-
 # Настройки базы данных PostgreSQL
 DATABASE_CONFIG = {
     'host': 'localhost',        # Хост базы данных
@@ -96,4 +95,5 @@ MESSAGES = {
 WEBSITE_URL = "http://technopredki.ru/"
 
 # Ссылка на положение (для согласия)
+
 REGULATION_URL = "https://disk.yandex.ru/i/OOvBNqbO9CkbRQ"
