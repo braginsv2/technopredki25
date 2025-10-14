@@ -2,7 +2,7 @@ from telebot import types
 from handler import clear_chat_history_optimized
 from datetime import datetime
 import time
-
+import re 
 user_temp_data = {}
 bot = None
 db = None
@@ -172,6 +172,8 @@ def init_bot(bot_instance, db_instance=None):
         user_id = call.from_user.id
         bot.clear_step_handler_by_chat_id(call.message.chat.id) 
         data = user_temp_data[user_id]
+        if data.get('time_fest', '') != '':
+            data.update({'time_fest': ''}) 
 
         keyboard = types.InlineKeyboardMarkup()
 
@@ -253,33 +255,84 @@ def init_bot(bot_instance, db_instance=None):
 def FIO(message, user_message_id):
     bot.delete_message(message.chat.id, user_message_id)
     bot.delete_message(message.chat.id, message.message_id)
-
-    if len(message.text.split())<2:
-            message = bot.send_message(message.chat.id, text="Неправильный формат ввода!\nВведите ФИО клиента в формате Иванов Иван Иванович".format(message.from_user))
-            user_message_id = message.message_id
-            bot.register_next_step_handler(message, FIO, user_message_id)
-    else:
-        words = message.text.split()
-        for word in words:
-            if not word[0].isupper():  # Проверяем, что первая буква заглавная
-                message = bot.send_message(message.chat.id, text="Каждое слово должно начинаться с заглавной буквы!\nВведите ФИО клиента в формате Иванов Иван Иванович")
-                user_message_id = message.message_id
-                bot.register_next_step_handler(message, FIO, user_message_id)
-                return
-        data = {"fio": message.text}
-        user_id = message.from_user.id
-        print(user_id)
-        user_temp_data[user_id] = data
-
-        keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(types.InlineKeyboardButton("24 октября", callback_data="24_oct"))
-        keyboard.add(types.InlineKeyboardButton("25 октября", callback_data="25_oct"))
-        keyboard.add(types.InlineKeyboardButton("24-25 октября", callback_data="24-25_oct"))
-        keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="soglasen"))
-        bot.send_message(
+    
+    text = message.text.strip()
+    
+    # Проверка на наличие переносов строк
+    if '\n' in text or '\r' in text:
+        msg = bot.send_message(
             message.chat.id,
-            'Выберите день, когда вы хотели бы посетить мероприятие.',
-            reply_markup=keyboard)
+            text="Ошибка! Нельзя записать несколько человек.\nВведите ФИО только одного клиента в формате: Иванов Иван Иванович"
+        )
+        user_message_id = msg.message_id
+        bot.register_next_step_handler(msg, FIO, user_message_id)
+        return
+    
+    words = text.split()
+    
+    # Проверка на минимальное количество слов (фамилия + имя = минимум 2)
+    if len(words) < 2:
+        msg = bot.send_message(
+            message.chat.id,
+            text="Неправильный формат ввода!\nВведите ФИО клиента в формате: Иванов Иван Иванович"
+        )
+        user_message_id = msg.message_id
+        bot.register_next_step_handler(msg, FIO, user_message_id)
+        return
+    
+    # Проверка на максимальное количество слов (защита от длинных текстов)
+    if len(words) > 5:
+        msg = bot.send_message(
+            message.chat.id,
+            text="Слишком много слов! Введите ФИО только одного человека в формате: Иванов Иван Иванович"
+        )
+        user_message_id = msg.message_id
+        bot.register_next_step_handler(msg, FIO, user_message_id)
+        return
+    
+    # Проверка каждого слова
+    for word in words:
+        if not validate_fio_word(word):
+            msg = bot.send_message(
+                message.chat.id,
+                text="Ошибка в формате!\nКаждое слово должно:\n"
+                     "• Начинаться с заглавной буквы\n"
+                     "• Содержать только буквы кириллицы\n"
+                     "• Может содержать дефисы (для двойных имен)\n\n"
+                     "Пример: Иванов Иван Иванович"
+            )
+            user_message_id = msg.message_id
+            bot.register_next_step_handler(msg, FIO, user_message_id)
+            return
+    
+    # Проверка на вероятность нескольких людей
+    probable_people_count = count_likely_people(text)
+    if probable_people_count > 1:
+        msg = bot.send_message(
+            message.chat.id,
+            text="Похоже, вы ввели несколько людей!\nВведите ФИО только одного человека в формате: Иванов Иван Иванович"
+        )
+        user_message_id = msg.message_id
+        bot.register_next_step_handler(msg, FIO, user_message_id)
+        return
+    
+    # Если все проверки пройдены
+    data = {"fio": text}
+    user_id = message.from_user.id
+    print(user_id)
+    user_temp_data[user_id] = data
+    
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton("24 октября", callback_data="24_oct"))
+    keyboard.add(types.InlineKeyboardButton("25 октября", callback_data="25_oct"))
+    keyboard.add(types.InlineKeyboardButton("24-25 октября", callback_data="24-25_oct"))
+    keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="soglasen"))
+    
+    bot.send_message(
+        message.chat.id,
+        'Выберите день, когда вы хотели бы посетить мероприятие.',
+        reply_markup=keyboard
+    )
 
 
 def date_of_birth(message, data, user_message_id):
@@ -433,3 +486,55 @@ def number(message, data, user_message_id):
         keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
         bot.send_message(message.chat.id, text=success_text, reply_markup=keyboard)
 
+def validate_fio_word(word):
+    """
+    Проверяет, является ли слово валидным словом в ФИО.
+    Позволяет:
+    - Кириллицу с заглавной первой буквой
+    - Дефисы внутри слова (для составных имен/фамилий)
+    - Слова вроде 'кызы', 'оглы' как отдельные слова
+    """
+    if not word:
+        return False
+    
+    # Проверяем, что слово состоит из кириллицы, дефисов и апострофов
+    if not re.match(r"^[А-ЯЁ][а-яёА-ЯЁ\-']*$", word):
+        return False
+    
+    return True
+
+
+def count_likely_people(text):
+    """
+    Примерная оценка количества людей в тексте.
+    Ищет паттерны типа: Фамилия Имя Отчество Фамилия Имя Отчество
+    (два полных набора ФИО подряд)
+    """
+    words = text.split()
+    
+    # Если меньше 6 слов, это скорее всего один человек
+    if len(words) < 6:
+        return 1
+    
+    # Считаем количество "реальных" переходов между ФИО
+    # Если есть два подряд идущих слова с заглавной буквы, а потом еще два -
+    # это может быть намеком на двух людей
+    capitalized_sequences = 0
+    current_sequence = 0
+    
+    for i, word in enumerate(words):
+        if word[0].isupper():
+            current_sequence += 1
+        else:
+            if current_sequence >= 2:
+                capitalized_sequences += 1
+            current_sequence = 0
+    
+    if current_sequence >= 2:
+        capitalized_sequences += 1
+    
+    # Если нашли несколько явных последовательностей - это несколько людей
+    if capitalized_sequences > 1:
+        return capitalized_sequences
+    
+    return 1
