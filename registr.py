@@ -7,6 +7,7 @@ user_temp_data = {}
 bot = None
 db = None
 
+
 def init_bot(bot_instance, db_instance=None):
     global bot, db
     bot = bot_instance
@@ -538,3 +539,4 @@ def count_likely_people(text):
         return capitalized_sequences
     
     return 1
+
