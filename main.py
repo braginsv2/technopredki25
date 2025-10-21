@@ -7,6 +7,7 @@ from database import DatabaseManager
 import sys
 import time
 
+
 bot = telebot.TeleBot(TOKEN)
 db = None
 
@@ -157,4 +158,5 @@ if __name__ == '__main__':
     finally:
 
         print("👋 Завершение работы бота")
+
 
