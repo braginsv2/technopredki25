@@ -7,7 +7,6 @@ user_temp_data = {}
 bot = None
 db = None
 
-
 def init_bot(bot_instance, db_instance=None):
     global bot, db
     bot = bot_instance
@@ -33,7 +32,7 @@ def init_bot(bot_instance, db_instance=None):
 
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
-
+        print("Начало регистрации")
         message1 = bot.send_message(
             call.message.chat.id,
             'Введите ФИО участника фестиваля в формате Иванов Иван Иванович',
@@ -53,9 +52,9 @@ def init_bot(bot_instance, db_instance=None):
         if call.data == "24_oct":
             data.update({'date_fest': '24 октября'})
             user_temp_data[user_id] = data
-            keyboard.add(types.InlineKeyboardButton("12:00", callback_data="12:00"),types.InlineKeyboardButton("13:00", callback_data="13:00"), types.InlineKeyboardButton("14:00", callback_data="14:00"))
-            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"),types.InlineKeyboardButton("16:00", callback_data="16:00"), types.InlineKeyboardButton("17:00", callback_data="17:00"))
-            keyboard.add(types.InlineKeyboardButton("18:00", callback_data="18:00"),types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
+            keyboard.add(types.InlineKeyboardButton("13:00", callback_data="13:00"), types.InlineKeyboardButton("14:00", callback_data="14:00"),types.InlineKeyboardButton("15:00", callback_data="15:00"))
+            keyboard.add(types.InlineKeyboardButton("16:00", callback_data="16:00"), types.InlineKeyboardButton("17:00", callback_data="17:00"),types.InlineKeyboardButton("18:00", callback_data="18:00"))
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
             bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
@@ -64,20 +63,20 @@ def init_bot(bot_instance, db_instance=None):
         elif call.data == "25_oct":
             data.update({'date_fest': '25 октября'})
             user_temp_data[user_id] = data
-            keyboard.add(types.InlineKeyboardButton("12:00", callback_data="12:00"),types.InlineKeyboardButton("13:00", callback_data="13:00"), types.InlineKeyboardButton("14:00", callback_data="14:00"))
-            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"),types.InlineKeyboardButton("16:00", callback_data="16:00"), types.InlineKeyboardButton("17:00", callback_data="17:00"))
-            keyboard.add(types.InlineKeyboardButton("18:00", callback_data="18:00"),types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
+            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"),types.InlineKeyboardButton("16:00", callback_data="16:00") )
+            keyboard.add(types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00"))
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
             bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text="Выберите время посещения фестиваля.",
+            text="Выберите время посещения фестиваля.\n\nВременные слоты 12:00, 13:00, 14:00 закрыты, в связи с максимальным количеством участников в данное время.",
             reply_markup=keyboard)
         elif call.data == "24-25_oct":
             data.update({'date_fest': '24-25 октября'})
             user_temp_data[user_id] = data
-            keyboard.add(types.InlineKeyboardButton("12:00", callback_data="12:0024"),types.InlineKeyboardButton("13:00", callback_data="13:0024"), types.InlineKeyboardButton("14:00", callback_data="14:0024"))
-            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:0024"),types.InlineKeyboardButton("16:00", callback_data="16:0024"), types.InlineKeyboardButton("17:00", callback_data="17:0024"))
-            keyboard.add(types.InlineKeyboardButton("18:00", callback_data="18:0024"),types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
+            keyboard.add(types.InlineKeyboardButton("13:00", callback_data="13:0024"), types.InlineKeyboardButton("14:00", callback_data="14:0024"), types.InlineKeyboardButton("15:00", callback_data="15:0024"))
+            keyboard.add(types.InlineKeyboardButton("16:00", callback_data="16:0024"), types.InlineKeyboardButton("17:00", callback_data="17:0024"), types.InlineKeyboardButton("18:00", callback_data="18:0024"))
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
             bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
@@ -135,13 +134,13 @@ def init_bot(bot_instance, db_instance=None):
         keyboard = types.InlineKeyboardMarkup()
         data.update({'time_fest': call.data[:5]})
         user_temp_data[user_id] = data
-        keyboard.add(types.InlineKeyboardButton("12:00", callback_data="12:00"),types.InlineKeyboardButton("13:00", callback_data="13:00"), types.InlineKeyboardButton("14:00", callback_data="14:00"))
-        keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"),types.InlineKeyboardButton("16:00", callback_data="16:00"), types.InlineKeyboardButton("17:00", callback_data="17:00"))
-        keyboard.add(types.InlineKeyboardButton("18:00", callback_data="18:00"),types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
+        keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"), types.InlineKeyboardButton("16:00", callback_data="16:00"))
+        keyboard.add(types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00"))
+        keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
         bot.edit_message_text(
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
-        text="Выберите время посещения фестиваля 25 октября.",
+        text="Выберите время посещения фестиваля 25 октября.\n\nВременные слоты 12:00, 13:00, 14:00 закрыты, в связи с максимальным количеством участников в данное время/",
         reply_markup=keyboard)
 
     @bot.callback_query_handler(func=lambda call: call.data in ["male", "female"])
@@ -179,28 +178,28 @@ def init_bot(bot_instance, db_instance=None):
         keyboard = types.InlineKeyboardMarkup()
 
         if data['date_fest'] == "24 октября":
-            keyboard.add(types.InlineKeyboardButton("12:00", callback_data="12:00"),types.InlineKeyboardButton("13:00", callback_data="13:00"), types.InlineKeyboardButton("14:00", callback_data="14:00"))
-            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"),types.InlineKeyboardButton("16:00", callback_data="16:00"), types.InlineKeyboardButton("17:00", callback_data="17:00"))
-            keyboard.add(types.InlineKeyboardButton("18:00", callback_data="18:00"),types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
+            keyboard.add(types.InlineKeyboardButton("13:00", callback_data="13:00"), types.InlineKeyboardButton("14:00", callback_data="14:00"), types.InlineKeyboardButton("15:00", callback_data="15:00"))
+            keyboard.add(types.InlineKeyboardButton("16:00", callback_data="16:00"), types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00"))
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
             bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
             text="Выберите время посещения фестиваля.",
             reply_markup=keyboard)
         elif data['date_fest'] == "25 октября":
-            keyboard.add(types.InlineKeyboardButton("12:00", callback_data="12:00"),types.InlineKeyboardButton("13:00", callback_data="13:00"), types.InlineKeyboardButton("14:00", callback_data="14:00"))
-            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"),types.InlineKeyboardButton("16:00", callback_data="16:00"), types.InlineKeyboardButton("17:00", callback_data="17:00"))
-            keyboard.add(types.InlineKeyboardButton("18:00", callback_data="18:00"),types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
+            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"), types.InlineKeyboardButton("16:00", callback_data="16:00"))
+            keyboard.add(types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00"))
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
             bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text="Выберите время посещения фестиваля.",
+            text="Выберите время посещения фестиваля.\n\nВременные слоты 12:00, 13:00, 14:00 закрыты, в связи с максимальным количеством участников в данное время",
             reply_markup=keyboard)
         elif data['date_fest'] == "24-25 октября":
 
-            keyboard.add(types.InlineKeyboardButton("12:00", callback_data="12:0024"),types.InlineKeyboardButton("13:00", callback_data="13:0024"), types.InlineKeyboardButton("14:00", callback_data="14:0024"))
-            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:0024"),types.InlineKeyboardButton("16:00", callback_data="16:0024"), types.InlineKeyboardButton("17:00", callback_data="17:0024"))
-            keyboard.add(types.InlineKeyboardButton("18:00", callback_data="18:0024"),types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
+            keyboard.add(types.InlineKeyboardButton("13:00", callback_data="13:0024"), types.InlineKeyboardButton("14:00", callback_data="14:0024"), types.InlineKeyboardButton("15:00", callback_data="15:0024"))
+            keyboard.add(types.InlineKeyboardButton("16:00", callback_data="16:0024"), types.InlineKeyboardButton("17:00", callback_data="17:0024"), types.InlineKeyboardButton("18:00", callback_data="18:0024"))
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
             bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
@@ -539,6 +538,3 @@ def count_likely_people(text):
         return capitalized_sequences
     
     return 1
-
-
-

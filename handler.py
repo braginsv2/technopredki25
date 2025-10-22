@@ -9,6 +9,7 @@ import queue
 import threading
 from time import sleep
 from config import WEBSITE_URL
+from psycopg2.extras import RealDictCursor
 registr = None
 bot = None
 db = None 
@@ -120,7 +121,78 @@ def register_main_menu_handlers(bot_instance):
             text=text,
             reply_markup=keyboard
         )
-
+    @bot.callback_query_handler(func=lambda call: call.data == "download_data_ask")
+    def callback_download_questions(call):
+        try:
+            # Получаем ВСЕ вопросы (не только неотвеченные)
+            connection = db.get_connection()
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT * FROM questions ORDER BY created_at DESC;")
+                questions = cursor.fetchall()
+            db.put_connection(connection)
+            
+            if not questions:
+                keyboard = types.InlineKeyboardMarkup()
+                keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
+                bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text="📊 База вопросов пуста",
+                    reply_markup=keyboard
+                )
+                return
+            
+            # Создаем DataFrame
+            df = pd.DataFrame([dict(q) for q in questions])
+            
+            # Переименовываем колонки на русский
+            column_mapping = {
+                'id': 'ID',
+                'telegram_id': 'ID Телеграмма',
+                'username': 'Username',
+                'full_name': 'ФИО',
+                'question_text': 'Вопрос',
+                'answer_text': 'Ответ',
+                'is_answered': 'Отвечен',
+                'created_at': 'Дата создания',
+                'answered_at': 'Дата ответа'
+            }
+            df = df.rename(columns=column_mapping)
+            
+            # Создаем Excel файл в памяти
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Вопросы', index=False)
+            
+            output.seek(0)
+            
+            # Отправляем файл
+            current_date = datetime.now().strftime("%Y-%m-%d_%H-%M")
+            filename = f"questions_{current_date}.xlsx"
+            clear_chat_history_optimized(call.message, 1)
+            bot.send_document(
+                call.message.chat.id,
+                document=output,
+                visible_file_name=filename,
+                caption=f"📊 База вопросов\n💬 Всего вопросов: {len(questions)}"
+            )
+            
+            keyboard = types.InlineKeyboardMarkup()
+            keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
+            safe_send_message(
+                call.message.chat.id,
+                "✅ Файл успешно создан и отправлен!",
+                reply_markup=keyboard
+            )
+            
+        except Exception as e:
+            keyboard = types.InlineKeyboardMarkup()
+            keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
+            safe_send_message(
+                call.message.chat.id,
+                f"❌ Ошибка при создании файла: {str(e)}",
+                reply_markup=keyboard
+            )
     @bot.callback_query_handler(func=lambda call: call.data == "stats_time")
     def callback_statistics_time(call):
         """Обработчик детализации по времени"""
@@ -469,7 +541,6 @@ def register_main_menu_handlers(bot_instance):
             if participant['date_fest'] == '24-25 октября':
                 # Для двухдневного посещения показываем кнопки для первого дня
                 keyboard = types.InlineKeyboardMarkup()
-                keyboard.add(types.InlineKeyboardButton("12:00", callback_data="update_time1_12:00"))
                 keyboard.add(types.InlineKeyboardButton("13:00", callback_data="update_time1_13:00"))
                 keyboard.add(types.InlineKeyboardButton("14:00", callback_data="update_time1_14:00"))
                 keyboard.add(types.InlineKeyboardButton("15:00", callback_data="update_time1_15:00"))
@@ -803,7 +874,91 @@ def register_main_menu_handlers(bot_instance):
         )
         
         bot.register_next_step_handler(call.message, mailing_content_handler, call.from_user.id)
+    @bot.callback_query_handler(func=lambda call: call.data == "send_message")
+    def callback_send_personal_message(call):
+        bot.clear_step_handler_by_chat_id(call.message.chat.id)
+        
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
+        
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text="📋 Введите Telegram ID пользователя:",
+            reply_markup=keyboard
+        )
+        
+        bot.register_next_step_handler(call.message, personal_message_id_handler, call.from_user.id)
 
+    def personal_message_id_handler(message, admin_id):
+        bot.delete_message(message.chat.id, message.message_id)
+        
+        try:
+            target_id = int(message.text.strip())
+            
+            # Сохраняем ID получателя
+            admin_temp_data[admin_id] = {'target_telegram_id': target_id}
+            
+            keyboard = types.InlineKeyboardMarkup()
+            keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
+            
+            clear_chat_history_optimized(message, 2)
+            safe_send_message(
+                message.chat.id,
+                f"✅ ID получателя: {target_id}\n\n✏️ Теперь введите текст сообщения:",
+                reply_markup=keyboard
+            )
+            
+            bot.register_next_step_handler(message, personal_message_text_handler, admin_id)
+            
+        except ValueError:
+            keyboard = types.InlineKeyboardMarkup()
+            keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
+            
+            clear_chat_history_optimized(message, 2)
+            safe_send_message(
+                message.chat.id,
+                "❌ Неправильный формат ID! Введите числовой ID:",
+                reply_markup=keyboard
+            )
+            bot.register_next_step_handler(message, personal_message_id_handler, admin_id)
+
+    def personal_message_text_handler(message, admin_id):
+        bot.delete_message(message.chat.id, message.message_id)
+        
+        if admin_id not in admin_temp_data:
+            return
+        
+        target_id = admin_temp_data[admin_id]['target_telegram_id']
+        message_text = message.text.strip()
+        
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
+        
+        try:
+            safe_send_message(
+                target_id,
+                f"📬 Личное сообщение от администратора:\n\n{message_text}"
+            )
+            
+            clear_chat_history_optimized(message, 2)
+            safe_send_message(
+                message.chat.id,
+                f"✅ Сообщение успешно отправлено пользователю {target_id}!",
+                reply_markup=keyboard
+            )
+            
+        except Exception as e:
+            clear_chat_history_optimized(message, 2)
+            safe_send_message(
+                message.chat.id,
+                f"❌ Ошибка при отправке сообщения: {str(e)}",
+                reply_markup=keyboard
+            )
+        
+        # Очищаем временные данные
+        if admin_id in admin_temp_data:
+            del admin_temp_data[admin_id]
     def mailing_content_handler(message, admin_id):
         bot.delete_message(message.chat.id, message.message_id)
         
@@ -884,9 +1039,6 @@ def register_main_menu_handlers(bot_instance):
         
         # Показываем кнопки для второго дня
         keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(types.InlineKeyboardButton("12:00", callback_data="update_time2_12:00"))
-        keyboard.add(types.InlineKeyboardButton("13:00", callback_data="update_time2_13:00"))
-        keyboard.add(types.InlineKeyboardButton("14:00", callback_data="update_time2_14:00"))
         keyboard.add(types.InlineKeyboardButton("15:00", callback_data="update_time2_15:00"))
         keyboard.add(types.InlineKeyboardButton("16:00", callback_data="update_time2_16:00"))
         keyboard.add(types.InlineKeyboardButton("17:00", callback_data="update_time2_17:00"))
@@ -900,7 +1052,7 @@ def register_main_menu_handlers(bot_instance):
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text=f"Выбрано время для 24 октября: {time1}\n\nТеперь выберите время для 25 октября:",
+            text=f"Выбрано время для 24 октября: {time1}\n\nТеперь выберите время для 25 октября.\n\nВременные слоты 12:00, 13:00, 14:00 закрыты, в связи с максимальным количеством участников в данное время.",
             reply_markup=keyboard
         )
 
@@ -945,13 +1097,13 @@ def register_main_menu_handlers(bot_instance):
         for i, telegram_id in enumerate(telegram_ids):
             try:
                 if content_data['type'] == 'text':
-                    safe_send_message(telegram_id, "Рассылка: "+content_data['text'])
+                    safe_send_message(telegram_id, content_data['text'])
                 elif content_data['type'] == 'photo':
                     bot.send_photo(telegram_id, content_data['file_id'], 
-                                caption="Вам отправлен документ"+content_data['caption'])
+                                caption=content_data['caption'])
                 elif content_data['type'] == 'document':
                     bot.send_document(telegram_id, content_data['file_id'], 
-                                    caption="Вам отправлено изображение"+content_data['caption'])
+                                    caption=content_data['caption'])
                 
                 sent_count += 1
                 

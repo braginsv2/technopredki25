@@ -7,7 +7,6 @@ from database import DatabaseManager
 import sys
 import time
 
-
 bot = telebot.TeleBot(TOKEN)
 db = None
 
@@ -23,10 +22,9 @@ def start_handler(message):
         keyboard.add(types.InlineKeyboardButton("📈 Статистика", callback_data="statistics"))
         keyboard.add(types.InlineKeyboardButton("📊 Скачать данные", callback_data="download_data"))
         keyboard.add(types.InlineKeyboardButton("💬 Ответить на вопрос", callback_data="answer_quest"))
+        keyboard.add(types.InlineKeyboardButton("📊 Скачать базу вопросов", callback_data="download_data_ask"))
+        keyboard.add(types.InlineKeyboardButton("💬 Написать личное сообщение", callback_data="send_message"))
         keyboard.add(types.InlineKeyboardButton("📢 Рассылка", callback_data="mailing"))
-        keyboard.add(types.InlineKeyboardButton("❓ Задать вопрос", callback_data="ask_quest"))
-        keyboard.add(types.InlineKeyboardButton("🚗 Как добраться", callback_data="how_get"))
-        keyboard.add(types.InlineKeyboardButton("🌐 Официальный сайт", callback_data="web_cite"))
         bot.send_message(
             message.chat.id, 
             f"Привет, {message.from_user.first_name}! {MESSAGES['welcome_admin']}", 
@@ -57,10 +55,10 @@ def start_handler_callback(call):
         keyboard.add(types.InlineKeyboardButton("📈 Статистика", callback_data="statistics"))
         keyboard.add(types.InlineKeyboardButton("📊 Скачать данные", callback_data="download_data"))
         keyboard.add(types.InlineKeyboardButton("💬 Ответить на вопрос", callback_data="answer_quest"))
+        keyboard.add(types.InlineKeyboardButton("📊 Скачать базу вопросов", callback_data="download_data_ask"))
+        keyboard.add(types.InlineKeyboardButton("💬 Написать личное сообщение", callback_data="send_message"))
         keyboard.add(types.InlineKeyboardButton("📢 Рассылка", callback_data="mailing"))
-        keyboard.add(types.InlineKeyboardButton("❓ Задать вопрос", callback_data="ask_quest"))
-        keyboard.add(types.InlineKeyboardButton("🚗 Как добраться", callback_data="how_get"))
-        keyboard.add(types.InlineKeyboardButton("🌐 Официальный сайт", callback_data="web_cite"))
+
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
@@ -156,7 +154,4 @@ if __name__ == '__main__':
         import traceback
         traceback.print_exc()
     finally:
-
         print("👋 Завершение работы бота")
-
-
