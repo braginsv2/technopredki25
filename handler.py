@@ -8,7 +8,7 @@ from datetime import datetime
 import queue
 import threading
 from time import sleep
-from config import WEBSITE_URL
+from config import WEBSITE_URL, PROGRAM_24, PROGRAM_25, ADMINS
 from psycopg2.extras import RealDictCursor
 registr = None
 bot = None
@@ -89,6 +89,247 @@ def register_main_menu_handlers(bot_instance):
         keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
         
         safe_send_message(message.chat.id, text, reply_markup=keyboard)
+    @bot.callback_query_handler(func=lambda call: call.data == "program")
+    def callback_program(call):
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("24 октября (пятница)", callback_data="program_24"))
+        keyboard.add(types.InlineKeyboardButton("25 октября (суббота)", callback_data="program_25"))
+        keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
+        bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text='🗓️ Выберите день мероприятия.',
+                    reply_markup=keyboard
+                )
+    @bot.callback_query_handler(func=lambda call: call.data in ["program_24", "program_24_1","program_24_2","program_24_3","program_24_4","program_24_5"])
+    def callback_program24(call):
+        if call.data in ["program_24", "program_24_1"]:
+            clear_chat_history_optimized(call.message, 1)
+        elif call.data == "program_24_2":
+            clear_chat_history_optimized(call.message, 4)
+        elif call.data == "program_24_3":
+            clear_chat_history_optimized(call.message, 3)
+        elif call.data == "program_24_4":
+            clear_chat_history_optimized(call.message, 2)
+        elif call.data == "program_24_5":
+            clear_chat_history_optimized(call.message, 2)
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("Главная сцена", callback_data="program_24_main"))
+        keyboard.add(types.InlineKeyboardButton("Весь день", callback_data="program_24_all"))
+        keyboard.add(types.InlineKeyboardButton("Образовательная зона", callback_data="program_24_obr"))
+        keyboard.add(types.InlineKeyboardButton("Лекторий", callback_data="program_24_lect"))
+        keyboard.add(types.InlineKeyboardButton("Соревнования", callback_data="program_24_sor"))
+        keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program"))
+        bot.send_message(
+                    chat_id=call.message.chat.id,
+                    text='Выберите из предложенных вариантов.',
+                    reply_markup=keyboard
+                )
+    @bot.callback_query_handler(func=lambda call: call.data in ["program_25", "program_25_1","program_25_2","program_25_3","program_25_4","program_25_5"])
+    def callback_program25(call):
+        if call.data in ["program_25", "program_25_1"]:
+            clear_chat_history_optimized(call.message, 1)
+        elif call.data == "program_25_2":
+            clear_chat_history_optimized(call.message, 4)
+        elif call.data == "program_25_3":
+            clear_chat_history_optimized(call.message, 3)
+        elif call.data == "program_25_4":
+            clear_chat_history_optimized(call.message, 2)
+        elif call.data == "program_25_5":
+            clear_chat_history_optimized(call.message, 2)
+        
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("Главная сцена", callback_data="program_25_main"))
+        keyboard.add(types.InlineKeyboardButton("Весь день", callback_data="program_25_all"))
+        keyboard.add(types.InlineKeyboardButton("Образовательная зона", callback_data="program_25_obr"))
+        keyboard.add(types.InlineKeyboardButton("Лекторий", callback_data="program_25_lect"))
+        keyboard.add(types.InlineKeyboardButton("Соревнования", callback_data="program_25_sor"))
+        keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program"))
+        bot.send_message(
+                    chat_id=call.message.chat.id,
+                    text='Выберите из предложенных вариантов.',
+                    reply_markup=keyboard
+                )
+    @bot.callback_query_handler(func=lambda call: call.data in ["program_24_main","program_24_all","program_24_obr", "program_24_lect", "program_24_sor"])
+    def callback_program24_message(call):
+        keyboard = types.InlineKeyboardMarkup()
+        if call.data == "program_24_main":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_24_1"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_24['program_24_main'],
+                    parse_mode="HTML", 
+                    reply_markup=keyboard
+                )
+        elif call.data == "program_24_all":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_24_2"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_24['program_24_all_part1'],
+                    parse_mode="HTML",
+                    reply_markup=None
+                )
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_24['program_24_all_part2'],
+                parse_mode="HTML",
+                reply_markup=None)
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_24['program_24_all_part3'],
+                parse_mode="HTML",
+                reply_markup=None)
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_24['program_24_all_part4'],
+                parse_mode="HTML",
+                reply_markup=keyboard)
+        elif call.data == "program_24_obr":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_24_3"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_24['program_24_obr_part1'],
+                    parse_mode="HTML",
+                    reply_markup=None
+                )
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_24['program_24_obr_part2'],
+                parse_mode="HTML",
+                reply_markup=None)
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_24['program_24_obr_part3'],
+                parse_mode="HTML",
+                reply_markup=keyboard)
+        elif call.data == "program_24_lect":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_24_4"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_24['program_24_lect_part1'],
+                    parse_mode="HTML",
+                    reply_markup=None
+                )
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_24['program_24_lect_part2'],
+                parse_mode="HTML",
+                reply_markup=keyboard)
+        elif call.data == "program_24_sor":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_24_5"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_24['program_24_sor_part1'],
+                    parse_mode="HTML",
+                    reply_markup=None
+                )
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_24['program_24_sor_part2'],
+                parse_mode="HTML",
+                reply_markup=keyboard)
+    @bot.callback_query_handler(func=lambda call: call.data in ["program_25_main","program_25_all","program_25_obr", "program_25_lect", "program_25_sor"])
+    def callback_program25_message(call):
+        keyboard = types.InlineKeyboardMarkup()
+        if call.data == "program_25_main":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_25_1"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_25['program_25_main'],
+                    parse_mode="HTML", 
+                    reply_markup=keyboard
+                )
+        elif call.data == "program_25_all":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_25_2"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_25['program_25_all_part1'],
+                    parse_mode="HTML",
+                    reply_markup=None
+                )
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_25['program_25_all_part2'],
+                parse_mode="HTML",
+                reply_markup=None)
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_25['program_25_all_part3'],
+                parse_mode="HTML",
+                reply_markup=None)
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_25['program_25_all_part4'],
+                parse_mode="HTML",
+                reply_markup=keyboard)
+        elif call.data == "program_25_obr":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_25_3"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_25['program_25_obr_part1'],
+                    parse_mode="HTML",
+                    reply_markup=None
+                )
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_25['program_25_obr_part2'],
+                parse_mode="HTML",
+                reply_markup=None)
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_25['program_25_obr_part3'],
+                parse_mode="HTML",
+                reply_markup=keyboard)
+        elif call.data == "program_25_lect":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_25_4"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_25['program_25_lect_part1'],
+                    parse_mode="HTML",
+                    reply_markup=None
+                )
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_25['program_25_lect_part2'],
+                parse_mode="HTML",
+                reply_markup=keyboard)
+        elif call.data == "program_25_sor":
+            keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="program_25_5"))
+            bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=PROGRAM_25['program_25_sor_part1'],
+                    parse_mode="HTML",
+                    reply_markup=None
+                )
+            time.sleep(0.5)
+            bot.send_message(
+                chat_id = call.message.chat.id,
+                text = PROGRAM_25['program_25_sor_part2'],
+                parse_mode="HTML",
+                reply_markup=keyboard)   
     @bot.callback_query_handler(func=lambda call: call.data == "statistics")
     def callback_statistics(call):
         """Обработчик кнопки статистики"""
@@ -1039,7 +1280,6 @@ def register_main_menu_handlers(bot_instance):
         
         # Показываем кнопки для второго дня
         keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(types.InlineKeyboardButton("15:00", callback_data="update_time2_15:00"))
         keyboard.add(types.InlineKeyboardButton("16:00", callback_data="update_time2_16:00"))
         keyboard.add(types.InlineKeyboardButton("17:00", callback_data="update_time2_17:00"))
         keyboard.add(types.InlineKeyboardButton("18:00", callback_data="update_time2_18:00"))
@@ -1052,7 +1292,7 @@ def register_main_menu_handlers(bot_instance):
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text=f"Выбрано время для 24 октября: {time1}\n\nТеперь выберите время для 25 октября.\n\nВременные слоты 12:00, 13:00, 14:00 закрыты, в связи с максимальным количеством участников в данное время.",
+            text=f"Выбрано время для 24 октября: {time1}\n\nТеперь выберите время для 25 октября.\n\nВременные слоты 12:00, 13:00, 14:00, 15:00 закрыты, в связи с максимальным количеством участников в данное время.",
             reply_markup=keyboard
         )
 
@@ -1096,6 +1336,9 @@ def register_main_menu_handlers(bot_instance):
         # Отправляем сообщения в зависимости от типа контента
         for i, telegram_id in enumerate(telegram_ids):
             try:
+                # Очищаем обработчики у получателя
+                bot.clear_step_handler_by_chat_id(telegram_id)
+                
                 if content_data['type'] == 'text':
                     safe_send_message(telegram_id, content_data['text'])
                 elif content_data['type'] == 'photo':
@@ -1103,7 +1346,30 @@ def register_main_menu_handlers(bot_instance):
                                 caption=content_data['caption'])
                 elif content_data['type'] == 'document':
                     bot.send_document(telegram_id, content_data['file_id'], 
-                                    caption=content_data['caption'])
+                                caption=content_data['caption'])
+                
+                # Отправляем главное меню после сообщения
+                keyboard = types.InlineKeyboardMarkup()
+                if telegram_id in ADMINS:
+                    keyboard.add(types.InlineKeyboardButton("📋 Зарегистрироваться на фестиваль", callback_data="btn_new_part"))
+                    keyboard.add(types.InlineKeyboardButton("🔍 Поиск участников", callback_data="btn_search_part"))
+                    keyboard.add(types.InlineKeyboardButton("👤 Личный кабинет", callback_data="personal_cabinet"))
+                    keyboard.add(types.InlineKeyboardButton("📈 Статистика", callback_data="statistics"))
+                    keyboard.add(types.InlineKeyboardButton("📊 Скачать данные", callback_data="download_data"))
+                    keyboard.add(types.InlineKeyboardButton("💬 Ответить на вопрос", callback_data="answer_quest"))
+                    keyboard.add(types.InlineKeyboardButton("📊 Скачать базу вопросов", callback_data="download_data_ask"))
+                    keyboard.add(types.InlineKeyboardButton("💬 Написать личное сообщение", callback_data="send_message"))
+                    keyboard.add(types.InlineKeyboardButton("📢 Рассылка", callback_data="mailing"))
+                    keyboard.add(types.InlineKeyboardButton("✨ Программа", callback_data="program"))
+                else:
+                    keyboard.add(types.InlineKeyboardButton("📋 Зарегистрироваться на фестиваль", callback_data="btn_new_part"))
+                    keyboard.add(types.InlineKeyboardButton("👤 Личный кабинет", callback_data="personal_cabinet"))
+                    keyboard.add(types.InlineKeyboardButton("❓ Задать вопрос", callback_data="ask_quest"))
+                    keyboard.add(types.InlineKeyboardButton("🚗 Как добраться", callback_data="how_get"))
+                    keyboard.add(types.InlineKeyboardButton("🌐 Официальный сайт", callback_data="web_cite"))
+                    keyboard.add(types.InlineKeyboardButton("✨ Программа", callback_data="program"))
+                
+                safe_send_message(telegram_id, "🏠 Главное меню:", reply_markup=keyboard)
                 
                 sent_count += 1
                 

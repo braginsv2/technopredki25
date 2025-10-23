@@ -63,13 +63,12 @@ def init_bot(bot_instance, db_instance=None):
         elif call.data == "25_oct":
             data.update({'date_fest': '25 октября'})
             user_temp_data[user_id] = data
-            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"),types.InlineKeyboardButton("16:00", callback_data="16:00") )
-            keyboard.add(types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00"))
+            keyboard.add(types.InlineKeyboardButton("16:00", callback_data="16:00"), types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00"))
             keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
             bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text="Выберите время посещения фестиваля.\n\nВременные слоты 12:00, 13:00, 14:00 закрыты, в связи с максимальным количеством участников в данное время.",
+            text="Выберите время посещения фестиваля.\n\nВременные слоты 12:00, 13:00, 14:00, 15:00 закрыты, в связи с максимальным количеством участников в данное время.",
             reply_markup=keyboard)
         elif call.data == "24-25_oct":
             data.update({'date_fest': '24-25 октября'})
@@ -134,13 +133,12 @@ def init_bot(bot_instance, db_instance=None):
         keyboard = types.InlineKeyboardMarkup()
         data.update({'time_fest': call.data[:5]})
         user_temp_data[user_id] = data
-        keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"), types.InlineKeyboardButton("16:00", callback_data="16:00"))
-        keyboard.add(types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00"))
+        keyboard.add(types.InlineKeyboardButton("16:00", callback_data="16:00"),types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00") )
         keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
         bot.edit_message_text(
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
-        text="Выберите время посещения фестиваля 25 октября.\n\nВременные слоты 12:00, 13:00, 14:00 закрыты, в связи с максимальным количеством участников в данное время/",
+        text="Выберите время посещения фестиваля 25 октября.\n\nВременные слоты 12:00, 13:00, 14:00, 15:00 закрыты, в связи с максимальным количеством участников в данное время/",
         reply_markup=keyboard)
 
     @bot.callback_query_handler(func=lambda call: call.data in ["male", "female"])
@@ -187,13 +185,12 @@ def init_bot(bot_instance, db_instance=None):
             text="Выберите время посещения фестиваля.",
             reply_markup=keyboard)
         elif data['date_fest'] == "25 октября":
-            keyboard.add(types.InlineKeyboardButton("15:00", callback_data="15:00"), types.InlineKeyboardButton("16:00", callback_data="16:00"))
-            keyboard.add(types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00"))
+            keyboard.add(types.InlineKeyboardButton("16:00", callback_data="16:00"), types.InlineKeyboardButton("17:00", callback_data="17:00"), types.InlineKeyboardButton("18:00", callback_data="18:00"))
             keyboard.add(types.InlineKeyboardButton("⬅️ Назад", callback_data="date_fest_back"))
             bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text="Выберите время посещения фестиваля.\n\nВременные слоты 12:00, 13:00, 14:00 закрыты, в связи с максимальным количеством участников в данное время",
+            text="Выберите время посещения фестиваля.\n\nВременные слоты 12:00, 13:00, 14:00, 15:00 закрыты, в связи с максимальным количеством участников в данное время",
             reply_markup=keyboard)
         elif data['date_fest'] == "24-25 октября":
 
