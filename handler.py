@@ -782,21 +782,21 @@ def register_main_menu_handlers(bot_instance):
             if participant['date_fest'] == '24-25 октября':
                 # Для двухдневного посещения показываем кнопки для первого дня
                 keyboard = types.InlineKeyboardMarkup()
-                keyboard.add(types.InlineKeyboardButton("13:00", callback_data="update_time1_13:00"))
-                keyboard.add(types.InlineKeyboardButton("14:00", callback_data="update_time1_14:00"))
-                keyboard.add(types.InlineKeyboardButton("15:00", callback_data="update_time1_15:00"))
-                keyboard.add(types.InlineKeyboardButton("16:00", callback_data="update_time1_16:00"))
-                keyboard.add(types.InlineKeyboardButton("17:00", callback_data="update_time1_17:00"))
                 keyboard.add(types.InlineKeyboardButton("18:00", callback_data="update_time1_18:00"))
                 # Кнопка назад остается как есть
-                text = f"Выберите время посещения для 24 октября:"
-            else:
-                # Для однодневного посещения - текстовый ввод как сейчас
-                text = f"Введите новое значение для поля '{field_names[field]}':"
-                bot.register_next_step_handler(call.message, edit_field_handler, admin_id, field)
-        else:
-            text = f"Введите новое значение для поля '{field_names[field]}':"
-            bot.register_next_step_handler(call.message, edit_field_handler, admin_id, field)
+                text = f"Выберите время посещения для 24 октября:\n\nВременные слоты 12:00-17:00 закрыты, в связи с максимальным количеством участников в данное время."
+            elif participant['date_fest'] == '24 октября':
+                keyboard = types.InlineKeyboardMarkup()
+                keyboard.add(types.InlineKeyboardButton("18:00", callback_data="update_time24_18:00"))
+                # Кнопка назад остается как есть
+                text = f"Выберите время посещения для 24 октября:\n\nВременные слоты 12:00-17:00 закрыты, в связи с максимальным количеством участников в данное время."
+            elif participant['date_fest'] == '25 октября':
+                # Показываем кнопки для второго дня
+                keyboard = types.InlineKeyboardMarkup()
+                keyboard.add(types.InlineKeyboardButton("16:00", callback_data="update_time25_16:00"))
+                keyboard.add(types.InlineKeyboardButton("17:00", callback_data="update_time25_17:00"))
+                keyboard.add(types.InlineKeyboardButton("18:00", callback_data="update_time25_18:00"))
+                text = f"Выберите время посещения для 25 октября:\n\nВременные слоты 12:00-15:00 закрыты, в связи с максимальным количеством участников в данное время."
         
         bot.edit_message_text(
             chat_id=call.message.chat.id,
@@ -1311,6 +1311,24 @@ def register_main_menu_handlers(bot_instance):
         
         # Обновляем поле в БД
         update_field_value(call, 'time_fest', new_value)
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("update_time24_"))
+    def callback_update_time24(call):
+        """Dремя для 24 октября"""
+        time = call.data.split("update_time24_")[1]
+        admin_id = call.from_user.id
+        new_value = f"{time}"
+        
+        # Обновляем поле в БД
+        update_field_value(call, 'time_fest', new_value)
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("update_time25_"))
+    def callback_update_time25(call):
+        """Время для 25 октября"""
+        time = call.data.split("update_time25_")[1]
+        admin_id = call.from_user.id
+        new_value = f"{time}"
+        
+        # Обновляем поле в БД
+        update_field_value(call, 'time_fest', new_value)
     @bot.callback_query_handler(func=lambda call: call.data == "confirm_mailing")
     def callback_confirm_mailing(call):
         admin_id = call.from_user.id
@@ -1360,6 +1378,7 @@ def register_main_menu_handlers(bot_instance):
                     keyboard.add(types.InlineKeyboardButton("📊 Скачать базу вопросов", callback_data="download_data_ask"))
                     keyboard.add(types.InlineKeyboardButton("💬 Написать личное сообщение", callback_data="send_message"))
                     keyboard.add(types.InlineKeyboardButton("📢 Рассылка", callback_data="mailing"))
+                    keyboard.add(types.InlineKeyboardButton("🚗 Как добраться", callback_data="how_get"))
                     keyboard.add(types.InlineKeyboardButton("✨ Программа", callback_data="program"))
                 else:
                     keyboard.add(types.InlineKeyboardButton("📋 Зарегистрироваться на фестиваль", callback_data="btn_new_part"))
@@ -1412,33 +1431,42 @@ def register_main_menu_handlers(bot_instance):
     # ========== КАК ДОБРАТЬСЯ ==========
     @bot.callback_query_handler(func=lambda call: call.data == "how_get")
     def callback_how_get(call):
+        clear_chat_history_optimized(call.message, 1)
         keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start"))
+        keyboard.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="callback_start2"))
         
         # Здесь указываем информацию о том, как добраться до места проведения
         location_text = """🚗 Как добраться до места проведения фестиваля:
 
-📍 Адрес: Шевченко 47б
+📍 Адрес: Шевченко 47Б
 
 🚌 Общественный транспорт:
-• Автобус №33 до остановки "ГРЭС-2"
-до остановки Енисейская - далее пешком 700м
-до остановки Шевченко - далее пешком 700м
+Автобус № 33 до остановки «ГРЭС-2». Далее – перейти дорогу.
+
+Автобусы 23, 26,27, 29, 156, 401, 510, трамваи 1, 4, 5 до остановки Енисейская. Далее – пешком 700 метров.
+
+Автобусы 5, 13, 16/131, 53, троллейбусы 2, 6, 6а до остановки «Шевченко». Далее – пешком 700 метров.
 
 🚗 На автомобиле:
 • Парковка доступна рядом с местом проведения
 • GPS координаты: 56.469852, 84.990921
 
-🚶‍♂️ Пешком от остановки: 5-10 минут
+⏰ Рекомендуем приехать за 15 минут до начала
 
-⏰ Рекомендуем приехать за 15 минут до начала"""
+🔴 - выезд с парковки
+🟡 - зона остановки автобусов
+🟢 - заезд на парковку"""
         
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=location_text,
-            reply_markup=keyboard
-        )
+        try:
+            with open('parking.jpg', 'rb') as photo:
+                bot.send_photo(
+                    chat_id=call.message.chat.id,
+                    photo=photo
+                )
+            bot.send_message(call.message.chat.id, location_text, parse_mode='HTML',reply_markup = keyboard)
+        except FileNotFoundError:
+            # Если картинки нет, отправляем только текст
+            bot.send_message(call.message.chat.id, location_text, parse_mode='HTML', reply_markup = keyboard)
 
     # ========== ОФИЦИАЛЬНЫЙ САЙТ ==========
     @bot.callback_query_handler(func=lambda call: call.data == "web_cite")

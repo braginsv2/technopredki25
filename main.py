@@ -25,6 +25,7 @@ def start_handler(message):
         keyboard.add(types.InlineKeyboardButton("📊 Скачать базу вопросов", callback_data="download_data_ask"))
         keyboard.add(types.InlineKeyboardButton("💬 Написать личное сообщение", callback_data="send_message"))
         keyboard.add(types.InlineKeyboardButton("📢 Рассылка", callback_data="mailing"))
+        keyboard.add(types.InlineKeyboardButton("🚗 Как добраться", callback_data="how_get"))
         keyboard.add(types.InlineKeyboardButton("✨ Программа", callback_data="program"))
         bot.send_message(
             message.chat.id, 
@@ -60,6 +61,7 @@ def start_handler_callback(call):
         keyboard.add(types.InlineKeyboardButton("📊 Скачать базу вопросов", callback_data="download_data_ask"))
         keyboard.add(types.InlineKeyboardButton("💬 Написать личное сообщение", callback_data="send_message"))
         keyboard.add(types.InlineKeyboardButton("📢 Рассылка", callback_data="mailing"))
+        keyboard.add(types.InlineKeyboardButton("🚗 Как добраться", callback_data="how_get"))
         keyboard.add(types.InlineKeyboardButton("✨ Программа", callback_data="program"))
 
         bot.edit_message_text(
@@ -80,6 +82,45 @@ def start_handler_callback(call):
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
             text = MESSAGES['welcome_user2'], 
+            reply_markup=keyboard
+        )
+@bot.callback_query_handler(func=lambda call: call.data == "callback_start2")
+def start_handler_callback2(call):
+    """Обработчик команды /start"""
+    bot.clear_step_handler_by_chat_id(call.message.chat.id)
+    from handler import clear_chat_history_optimized
+    clear_chat_history_optimized(call.message, 2)
+    user_id = call.from_user.id
+    if user_id in ADMINS:
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("📋 Зарегистрироваться на фестиваль", callback_data="btn_new_part"))
+        keyboard.add(types.InlineKeyboardButton("🔍 Поиск участников", callback_data="btn_search_part"))
+        keyboard.add(types.InlineKeyboardButton("👤 Личный кабинет", callback_data="personal_cabinet"))
+        keyboard.add(types.InlineKeyboardButton("📈 Статистика", callback_data="statistics"))
+        keyboard.add(types.InlineKeyboardButton("📊 Скачать данные", callback_data="download_data"))
+        keyboard.add(types.InlineKeyboardButton("💬 Ответить на вопрос", callback_data="answer_quest"))
+        keyboard.add(types.InlineKeyboardButton("📊 Скачать базу вопросов", callback_data="download_data_ask"))
+        keyboard.add(types.InlineKeyboardButton("💬 Написать личное сообщение", callback_data="send_message"))
+        keyboard.add(types.InlineKeyboardButton("📢 Рассылка", callback_data="mailing"))
+        keyboard.add(types.InlineKeyboardButton("🚗 Как добраться", callback_data="how_get"))
+        keyboard.add(types.InlineKeyboardButton("✨ Программа", callback_data="program"))
+
+        bot.send_message(
+            chat_id=call.message.chat.id,
+            text = MESSAGES['welcome_admin2'], 
+            reply_markup=keyboard
+        )
+    else:
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("📋 Зарегистрироваться на фестиваль", callback_data="btn_new_part"))
+        keyboard.add(types.InlineKeyboardButton("👤 Личный кабинет", callback_data="personal_cabinet"))
+        keyboard.add(types.InlineKeyboardButton("❓ Задать вопрос", callback_data="ask_quest"))
+        keyboard.add(types.InlineKeyboardButton("🚗 Как добраться", callback_data="how_get"))
+        keyboard.add(types.InlineKeyboardButton("🌐 Официальный сайт", callback_data="web_cite"))
+        keyboard.add(types.InlineKeyboardButton("✨ Программа", callback_data="program"))
+        bot.send_message(
+            chat_id=call.message.chat.id,
+            text = MESSAGES['welcome_admin2'], 
             reply_markup=keyboard
         )
 def init_database():
